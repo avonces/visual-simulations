@@ -2,7 +2,7 @@
 ![badge: glsl](https://img.shields.io/badge/Lang-GLSL-informational?style=for-the-badge&logo=OpenGL&logoColor=white&color=fcd132)
 
 # visual-simulations
-a python environment created with moderngl, moderngl-window and imgui for running compute shaders written in glsl
+a python environment created with moderngl, moderngl-window and imgui for modifying textures with compute shaders written in glsl
 
 WORK IN PROGRESS
 
