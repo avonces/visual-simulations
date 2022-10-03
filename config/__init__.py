@@ -1,1 +1,2 @@
-from .manager import AppConfig
+from .manager import TextureShaderWindowConfig
+from .manager import SlimeMoldWindowConfig

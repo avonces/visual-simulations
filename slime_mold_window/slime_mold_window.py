@@ -1,5 +1,5 @@
 from logging import getLogger
-from config import TextureShaderWindowConfig
+from config import SlimeMoldWindowConfig
 from pathlib import Path
 from os import walk
 import moderngl as mgl
@@ -14,7 +14,7 @@ logging
 """
 
 
-# create a logger
+# inherit the logger from the parent
 logger = getLogger(__name__)
 
 
@@ -23,7 +23,7 @@ config
 """
 
 # read and format the config
-config = TextureShaderWindowConfig()
+config = SlimeMoldWindowConfig()
 
 
 """
@@ -31,8 +31,8 @@ rendering and gui
 """
 
 
-class TextureShaderWindow(WindowConfig):
-    title = 'Visual Simulations - Texture Shaders'
+class SlimeMoldWindow(WindowConfig):
+    title = 'Visual Simulations - Slime Mold Simulation'
     gl_version = (4, 3)
 
     window_size = (1440, 720)
@@ -158,7 +158,7 @@ class TextureShaderWindow(WindowConfig):
                 for shader_dir in self.shader_dirs:
                     if imgui.button(shader_dir, -1, 25):  # load the compute shader if the button is clicked
                         if config.most_recent_shader_directory != shader_dir:  # change the most recent shader dir
-                            config.most_recent_shader_directory = shader_dir   # to the selected shader dir
+                            config.most_recent_shader_directory = shader_dir  # to the selected shader dir
 
                         # textured quad rendering
                         self.texture_renderer = self.load_program(
@@ -225,4 +225,4 @@ class TextureShaderWindow(WindowConfig):
 
 
 if __name__ == '__main__':
-    TextureShaderWindow.run()
+    SlimeMoldWindow.run()

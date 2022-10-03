@@ -17,7 +17,7 @@ void main() {
     ivec2 texelPos = ivec2( gl_GlobalInvocationID.xy );
 
     // get the value that is stored for the texel in the image
-    float texelOldVal = imageLoad( destTex, texelPos ).a;
+    // float texelOldVal = imageLoad( destTex, texelPos ).a;
 
     // waveeeeeee
     float texelNewVal = sin(float(gl_WorkGroupID.x + gl_WorkGroupID.y) * 0.01 + time) / 2.0 + 0.5;
