@@ -6,6 +6,19 @@ a python environment created with moderngl, moderngl-window and imgui for modify
 
 WORK IN PROGRESS
 
-## inspirated by: 
+## concept art
+### slime mold behavior
+![CONCEPT ART: slime mold behavior](https://github.com/avonces/visual-simulations/blob/main/pics/concept_art_-_slime_mold_behavior.png)
+(from https://cargocollective.com/sagejenson/physarum)
+
+
+
+## inspiration: 
+
+### framework and shader code:
 - https://github.com/moderngl/moderngl/tree/master/examples
 - https://github.com/moderngl/moderngl/blob/master/examples/compute_shader_render_texture.py
+
+### slime simulation:
+- https://www.youtube.com/watch?v=X-iSQQgOd1A
+- https://cargocollective.com/sagejenson/physarum
