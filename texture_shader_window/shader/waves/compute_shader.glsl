@@ -20,8 +20,8 @@ void main() {
     // float texelOldVal = imageLoad( destTex, texelPos ).a;
 
     // waveeeeeee
-    float texelNewVal = sin(float(gl_WorkGroupID.x + gl_WorkGroupID.y) * 0.01 + time) / 2.0 + 0.5;
+    float texelNewVal = sin( float( gl_WorkGroupID.x + gl_WorkGroupID.y ) * 0.01 + time ) / 2.0 + 0.5;
 
     // store the value that has been calculated for the texel in the image
-    imageStore(destTex, texelPos, vec4(clr_fg.r, clr_fg.g, clr_fg.b, texelNewVal));
+    imageStore( destTex, texelPos, vec4( clr_fg.r, clr_fg.g, clr_fg.b, texelNewVal ) );
 }

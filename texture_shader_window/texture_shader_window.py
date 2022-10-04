@@ -105,7 +105,7 @@ class TextureShaderWindow(WindowConfig):
 
         # automatically binds as a GL_R32F / r32f (read from the texture)
         self.displayed_texture.bind_to_image(0, read=True, write=True)
-        # run the compute shader and let it compute a value for EVERY FUCKING PIXEL
+        # run the compute shader and let it compute a value for EVERY GODDAMN PIXEL
         self.compute_shader.run(self.texture_dimensions[0], self.texture_dimensions[1], 1)
 
         # render texture

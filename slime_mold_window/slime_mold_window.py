@@ -1,5 +1,6 @@
 from logging import getLogger
 from config import SlimeMoldWindowConfig
+import numpy
 from pathlib import Path
 from os import walk
 import moderngl as mgl
@@ -27,12 +28,33 @@ config = SlimeMoldWindowConfig()
 
 
 """
+utility
+"""
+
+
+def generate_agent_data(agent_count: int = config.number_of_agents, dimensions: tuple = (1920, 1080)) -> numpy.array:
+    # generate a list of x coordinates
+    x = numpy.array([dimensions[0] / 2] * agent_count)  # TODO: all agents (slimes) will be spawned in the middle
+    # generate a list of y coordinates
+    y = numpy.array([dimensions[1] / 2] * agent_count)
+    # generate a list of angles (unit: radians -> 2 * pi * random); random values range from 0.0 to 1.0
+    angle = 2 * numpy.pi * numpy.random.random(agent_count)
+
+    # translate slice objects to concatenation along the second axis:
+    # array([[x, y, angle]
+    #        [x, y, angle]
+    #        [x, y, angle]
+    #        [...]])
+    return numpy.c_[x, y, angle]
+
+
+"""
 rendering and gui
 """
 
 
 class SlimeMoldWindow(WindowConfig):
-    title = 'Visual Simulations - Slime Mold Simulation'
+    title = 'Visual Simulations - Slime Mold Simulations'
     gl_version = (4, 3)
 
     window_size = (1440, 720)
@@ -42,8 +64,8 @@ class SlimeMoldWindow(WindowConfig):
     # get a list of all the available shaders in the resource dir
     shader_dirs = list(next(walk(resource_dir), ([], None, None))[1])
 
-    texture_dimensions = (1920, 1080)
-    group_size = (1, 1, 1)
+    texture_dimensions = (720, 360)  # (1920, 1080)
+    group_size = (1, 1)
 
     def __init__(self, **kwargs) -> None:
         """initialization"""
@@ -60,6 +82,14 @@ class SlimeMoldWindow(WindowConfig):
         self.displayed_texture.filter = mgl.NEAREST, mgl.NEAREST    # weighted average of the four closest
         # texture elements
 
+        # create a buffer to store position and angle of every agent (slime)
+        self.buffer_agent_data = self.ctx.buffer(
+            data=generate_agent_data(
+                config.number_of_agents,
+                self.texture_dimensions
+            ).astype('f4')
+        )
+
         # quad fragments
         self.quad_fs = quad_fs()
 
@@ -69,15 +99,34 @@ class SlimeMoldWindow(WindowConfig):
             fragment_shader=f'{config.most_recent_shader_directory}/fragment_shader.glsl'
         )
 
-        # compute shader
-        self.compute_shader = self.load_compute_shader(
-            f'{config.most_recent_shader_directory}/compute_shader.glsl',
+        # blur compute shader
+        self.blur_compute_shader = self.load_compute_shader(
+            f'{config.most_recent_shader_directory}/blur_compute_shader.glsl',
             defines={
                 'destText': 0
             }
         )
-        # clr_fg needs to be passed to the compute shader initially, because it is a uniform
-        self.compute_shader['clr_fg'] = config.clr_fg_rgb
+        # These values need to be passed to the compute shader initially, because they are uniforms
+        self.blur_compute_shader['diffusion_speed'] = config.blur_diffusion_speed
+        self.blur_compute_shader['evaporation_speed'] = config.blur_evaporation_speed
+
+        # slime compute shader
+        self.slime_compute_shader = self.load_compute_shader(
+            f'{config.most_recent_shader_directory}/slime_compute_shader.glsl',
+            defines={
+                'destText': 0,
+                'width': self.texture_dimensions[0],
+                'height': self.texture_dimensions[1],
+                'nOA': config.number_of_agents
+            }
+        )
+        # These values need to be passed to the compute shader initially, because they are uniforms
+        self.slime_compute_shader['clr_fg'] = config.clr_fg_rgb
+        self.slime_compute_shader['movement_speed'] = config.slime_movement_speed
+        # self.slime_compute_shader['rotation_speed'] = config.slime_rotation_speed
+        # self.slime_compute_shader['sensor_distance'] = config.slime_sensor_distance
+        # self.slime_compute_shader['sensor_angle'] = config.slime_sensor_angle
+        # self.slime_compute_shader['sensor_size'] = config.slime_sensor_size
 
     # ----------
     # rendering
@@ -85,28 +134,39 @@ class SlimeMoldWindow(WindowConfig):
 
     def render(self, time: float, frame_time: float) -> None:
         """called every frame - render everything"""
-        self.render_simulation_frame(time)
+        self.render_simulation_frame(frame_time)
         self.render_ui_frame()
 
     # ----------
     # rendering: simulation
     # ----------
 
-    def render_simulation_frame(self, time: float) -> None:
+    def render_simulation_frame(self, frame_time: float) -> None:
         """render the textures"""
         # clear screen (background color)
         self.ctx.clear(*config.clr_bg_rgb)
 
-        # pass the time to the compute shader
+        # pass the frame time to the compute shader s
         try:
-            self.compute_shader['time'] = time
+            self.slime_compute_shader['frame_time'] = frame_time
+        except Exception as e:
+            logger.exception(e)
+
+        try:
+            self.blur_compute_shader['frame_time'] = frame_time
         except Exception as e:
             logger.exception(e)
 
         # automatically binds as a GL_R32F / r32f (read from the texture)
         self.displayed_texture.bind_to_image(0, read=True, write=True)
-        # run the compute shader and let it compute a value for EVERY FUCKING PIXEL
-        self.compute_shader.run(self.texture_dimensions[0], self.texture_dimensions[1], 1)
+
+        self.buffer_agent_data.bind_to_storage_buffer(1)
+
+        # run the compute shaders and let them compute values for EVERY GODDAMN PIXEL
+        # first blur the texture, then render the agents to display the agents at full brightness
+        # TODO: implement group sizes
+        self.blur_compute_shader.run(self.texture_dimensions[0], self.texture_dimensions[1])
+        self.slime_compute_shader.run(self.texture_dimensions[0], self.texture_dimensions[1])
 
         # render texture
         self.displayed_texture.use(location=0)
@@ -132,7 +192,7 @@ class SlimeMoldWindow(WindowConfig):
             )
             imgui.end_child()
             if changed:  # pass the new value to the compute shader
-                self.compute_shader['clr_fg'] = config.clr_fg_rgb
+                self.slime_compute_shader['clr_fg'] = config.clr_fg_rgb
 
             imgui.dummy(0, 5)  # spacing
 
@@ -142,9 +202,6 @@ class SlimeMoldWindow(WindowConfig):
                 "bg", *config.clr_bg_rgb
             )
             imgui.end_child()
-            if changed:  # pass the new value to the compute shader
-                # self.compute_shader['clr_bg'] = FormattedConfig.clr_bg_rgb
-                pass
 
             imgui.pop_item_width()
             imgui.end()  # close current window context
@@ -166,18 +223,28 @@ class SlimeMoldWindow(WindowConfig):
                             fragment_shader=f'{shader_dir}/fragment_shader.glsl'
                         )
 
+                        # blur compute shader
+                        self.blur_compute_shader = self.load_compute_shader(
+                            f'{config.most_recent_shader_directory}/blur_compute_shader.glsl',
+                            defines={
+                                'destText': 0
+                            }
+                        )
+
                         # compute shader
-                        self.compute_shader = self.load_compute_shader(
+                        self.slime_compute_shader = self.load_compute_shader(
                             f'{shader_dir}/compute_shader.glsl',
                             defines={
                                 'destText': 0
                             }
                         )
                         # clr_fg needs to be passed to the compute shader initially, because it is a uniform
-                        self.compute_shader['clr_fg'] = config.clr_fg_rgb
+                        self.slime_compute_shader['clr_fg'] = config.clr_fg_rgb
 
             imgui.pop_item_width()
             imgui.end()
+
+        # TODO: blur and slime shader uniforms
 
         # pass all drawing commands to the rendering pipeline:
         #   render imgui elements and display them in the moderngl-window window
