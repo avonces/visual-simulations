@@ -122,35 +122,8 @@ class TextureShaderWindow(WindowConfig):
         imgui.new_frame()
 
         # open new window context
-        if imgui.begin('COLORS'):
-            imgui.push_item_width(imgui.get_window_width() * 0.75)  # max item with: 75% of the window from the left
-
-            imgui.text('Foreground Color')
-            imgui.begin_child('clr_fg', 0, 35, True)  # child region with border
-            changed, config.clr_fg_rgb = imgui.color_edit3(
-                "fg", *config.clr_fg_rgb
-            )
-            imgui.end_child()
-            if changed:  # pass the new value to the compute shader
-                self.compute_shader['clr_fg'] = config.clr_fg_rgb
-
-            imgui.dummy(0, 5)  # spacing
-
-            imgui.text('Background Color')
-            imgui.begin_child('clr_bg', 0, 35, True)
-            changed, config.clr_bg_rgb = imgui.color_edit3(
-                "bg", *config.clr_bg_rgb
-            )
-            imgui.end_child()
-            if changed:  # pass the new value to the compute shader
-                # self.compute_shader['clr_bg'] = FormattedConfig.clr_bg_rgb
-                pass
-
-            imgui.pop_item_width()
-            imgui.end()  # close current window context
-
         if imgui.begin('COMPUTE SHADERS'):
-            imgui.push_item_width(imgui.get_window_width() * 0.75)
+            imgui.push_item_width(imgui.get_window_width() * 0.75)  # max item with: 75% of the window from the left
 
             visible = True
             expanded, visible = imgui.collapsing_header('Select a compute shader.', visible)
@@ -177,15 +150,39 @@ class TextureShaderWindow(WindowConfig):
                         self.compute_shader['clr_fg'] = config.clr_fg_rgb
 
             imgui.pop_item_width()
+            imgui.end()  # close current window context
+
+        if imgui.begin('COLORS'):
+            imgui.push_item_width(imgui.get_window_width() * 0.75)
+
+            imgui.text('Foreground Color')
+            imgui.begin_child('clr_fg', 0, 35, True)  # child region with border
+            changed, config.clr_fg_rgb = imgui.color_edit3(
+                "fg", *config.clr_fg_rgb
+            )
+            imgui.end_child()
+            if changed:  # pass the new value to the compute shader
+                self.compute_shader['clr_fg'] = config.clr_fg_rgb
+
+            imgui.dummy(0, 5)  # spacing
+
+            imgui.text('Background Color')
+            imgui.begin_child('clr_bg', 0, 35, True)
+            changed, config.clr_bg_rgb = imgui.color_edit3(
+                "bg", *config.clr_bg_rgb
+            )
+            imgui.end_child()
+
+            imgui.pop_item_width()
             imgui.end()
+
+        # close imgui frame context
+        imgui.end_frame()
 
         # pass all drawing commands to the rendering pipeline:
         #   render imgui elements and display them in the moderngl-window window
         imgui.render()
         self.imgui_renderer.render(imgui.get_draw_data())
-
-        # close imgui frame context
-        imgui.end_frame()
 
     # ----------
     # ui events

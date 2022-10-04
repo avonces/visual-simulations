@@ -18,7 +18,7 @@ layout( std430, binding = 1 ) restrict buffer buffer_agent_data {
 
 // constants
 #define pi 3.141592653
-#define width 1920  // the following constants woll be updated by the python program running this
+#define width 1920  // the following constants will be updated by the python program running this
 #define height 1080
 #define nOA 1000000 // number of agents
 
@@ -27,14 +27,17 @@ uniform float frame_time;
 uniform vec3 clr_fg;
 uniform float movement_speed;  // slime-specific values from here on
 // uniform float rotation_speed;
-// uniform float sensor_distance;
 // uniform float sensor_angle;  // spacing between the sensors
+// uniform float sensor_distance;
 // uniform float sensor_size;
 
 // generating pseudo random numbers
+// TODO: better random function
 float random( vec2 position ){
     return fract( sin( dot( position.xy, vec2( 12.9898, 78.233 ) ) ) * 43758.5453 );
 }
+
+// TODO: make the agents smarter
 
 // what will be done for each agent
 void main() {
@@ -50,9 +53,9 @@ void main() {
     vec2 new_position = vec2( agent.x, agent.y ) + ( direction * movement_speed * frame_time );
 
     // handle wall collision
-    if ( new_position.x < 0. || new_position.x >= width || new_position.y < 0. || new_position.y >= height ) {
-        new_position.x = min( width - 0.01, max( 0., new_position.x ) );
-        new_position.y = min( height - 0.01, max( 0., new_position.y ) );
+    if ( new_position.x < 0.0 || new_position.x >= width || new_position.y < 0.0 || new_position.y >= height ) {
+        new_position.x = min( width - 0.1, max( 0.0, new_position.x ) );
+        new_position.y = min( height - 0.1, max( 0.0, new_position.y ) );
         agent.angle = random( new_position ) * 2 * pi;
     }
 

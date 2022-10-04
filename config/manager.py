@@ -75,8 +75,8 @@ class SlimeMoldWindowConfig(ConfigManager):
         self.slime_movement_speed = float(self.config['agent']['movement_speed'])
         self.slime_rotation_speed = float(self.config['agent']['rotation_speed'])
 
-        self.slime_sensor_distance = float(self.config['agent']['sensor_distance'])
         self.slime_sensor_angle = float(self.config['agent']['sensor_angle'])
+        self.slime_sensor_distance = int(self.config['agent']['sensor_distance'])
         self.slime_sensor_size = int(self.config['agent']['sensor_size'])
 
         self.blur_diffusion_speed = float(self.config['blur']['diffusion_speed'])
@@ -99,8 +99,8 @@ class SlimeMoldWindowConfig(ConfigManager):
         self.config['agent']['movement_speed'] = str(self.slime_movement_speed)
         self.config['agent']['rotation_speed'] = str(self.slime_rotation_speed)
 
-        self.config['agent']['sensor_distance'] = str(self.slime_sensor_distance)
         self.config['agent']['sensor_angle'] = str(self.slime_sensor_angle)
+        self.config['agent']['sensor_distance'] = str(self.slime_sensor_distance)
         self.config['agent']['sensor_size'] = str(self.slime_sensor_size)
 
         self.config['blur']['diffusion_speed'] = str(self.blur_diffusion_speed)
