@@ -1,5 +1,21 @@
 #version 430
 
+
+// MIT License
+//
+// Copyright (c) 2021 Leterax
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+
 // local group size
 layout( local_size_x = 1, local_size_y = 1 ) in;
 
@@ -8,7 +24,7 @@ layout( rgba8, location = 0 ) uniform image2D destTex;
 
 // data type: agent - each agent has a position and an angle
 struct Agent {
-    float x, y, angle;
+    float x, y, angle, species;
 };
 
 // buffer containing agent data
@@ -26,10 +42,10 @@ layout( std430, binding = 1 ) restrict buffer buffer_agent_data {
 uniform float frame_time;
 uniform vec3 clr_fg;
 uniform float movement_speed;  // slime-specific values from here on
-// uniform float rotation_speed;
-// uniform float sensor_angle;  // spacing between the sensors
-// uniform float sensor_distance;
-// uniform float sensor_size;
+uniform float rotation_speed;
+uniform float sensor_angle;  // spacing between the sensors (offset)
+uniform int sensor_distance;
+uniform int sensor_size;
 
 // generating pseudo random numbers
 // TODO: better random function
@@ -38,6 +54,23 @@ float random( vec2 position ){
 }
 
 // TODO: make the agents smarter
+float get_sensor_value( Agent agent, float sensor_angle ) {
+    float agent_sensor_angle = agent.angle + sensor_angle;
+    vec2 sensor_direction = vec2( cos( agent_sensor_angle ), sin( agent_sensor_angle ));
+    ivec2 sensor_center = ivec2( agent.x, agent.y ) + ivec2( sensor_direction * sensor_distance);
+
+    float sensor_value = 0;
+    for ( int offset_x = -sensor_size; offset_x <= sensor_size; offset_x++ ) {
+        for ( int offset_y = -sensor_size; offset_y <= sensor_size; offset_y++ ) {
+            ivec2 position = sensor_center + ivec2( offset_x, offset_y );
+
+            if ( position.x >= 0 && position.x < width && position.y >=0 && position.y < height ) {
+                sensor_value += imageLoad( destTex, position ).a;
+            }
+        }
+    }
+    return sensor_value;
+}
 
 // what will be done for each agent
 void main() {
@@ -47,6 +80,27 @@ void main() {
         return;
     }
     Agent agent = AgentBuffer.agents[index];
+
+    // get the sensor values and determine the weights
+    float weight_left = get_sensor_value( agent, sensor_angle );
+    float weight_forward = get_sensor_value( agent, 0 );
+    float weight_right = get_sensor_value( agent, -sensor_angle );
+
+    float random_steer_strentgh = random( vec2( agent.x, agent.y )* frame_time * agent.angle );
+
+    // adjust the agents angle based on those values
+    if ( weight_forward > weight_left && weight_forward > weight_right ) {  // weight forward
+        // keep angle
+    }
+    else if ( weight_forward < weight_left && weight_forward < weight_right ) {  // weight left or right is the biggest
+        agent.angle += ( random_steer_strentgh - 0.5 ) * 2 * rotation_speed * frame_time;  // a bit of random steering
+    }
+    else if ( weight_right > weight_left ) {  // weight right is the biggest
+        agent.angle -= random_steer_strentgh * rotation_speed * frame_time;  // subtract from the current angle
+    }
+    else if ( weight_left > weight_right ) {  // weigh left is the biggest
+        agent.angle += random_steer_strentgh * rotation_speed * frame_time;  // add to the current angle
+    }
 
     // calculate the direction and position
     vec2 direction = vec2( cos( agent.angle ), sin( agent.angle ) );

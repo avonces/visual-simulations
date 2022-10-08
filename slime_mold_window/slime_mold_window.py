@@ -34,18 +34,21 @@ utility
 
 def generate_agent_data(agent_count: int = config.number_of_agents, dimensions: tuple = (1920, 1080)) -> numpy.array:
     # generate a list of x coordinates
-    x = numpy.array([dimensions[0] / 2] * agent_count)  # TODO: all agents (slimes) will be spawned in the middle
+    x = [dimensions[0]] * numpy.random.random(agent_count)
     # generate a list of y coordinates
-    y = numpy.array([dimensions[1] / 2] * agent_count)
+    y = [dimensions[1]] * numpy.random.random(agent_count)
     # generate a list of angles (unit: radians -> 2 * pi * random); random values range from 0.0 to 1.0
     angle = 2 * numpy.pi * numpy.random.random(agent_count)
+
+    # slime species: currently there is only one...
+    species = numpy.array([1] * agent_count)
 
     # translate slice objects to concatenation along the second axis:
     # array([[x, y, angle]
     #        [x, y, angle]
     #        [x, y, angle]
     #        [...]])
-    return numpy.c_[x, y, angle]
+    return numpy.c_[x, y, angle, species]
 
 
 """
@@ -57,14 +60,14 @@ class SlimeMoldWindow(WindowConfig):
     title = 'Visual Simulations - Slime Mold Simulations'
     gl_version = (4, 3)
 
-    window_size = (1440, 720)
+    window_size = (1440, 720)  # (1440, 720)
     aspect_ratio = None
 
     resource_dir = (Path(__file__).parent / 'shader').resolve()
     # get a list of all the available shaders in the resource dir
     shader_dirs = list(next(walk(resource_dir), ([], None, None))[1])
 
-    texture_dimensions = (720, 360)  # (1920, 1080)
+    texture_dimensions = (640, 360)  # (1920, 1080)
     group_size = (1, 1)
 
     def __init__(self, **kwargs) -> None:
@@ -123,10 +126,10 @@ class SlimeMoldWindow(WindowConfig):
         # These values need to be passed to the compute shader initially, because they are uniforms
         self.slime_compute_shader['clr_fg'] = config.clr_fg_rgb
         self.slime_compute_shader['movement_speed'] = config.slime_movement_speed
-        # self.slime_compute_shader['rotation_speed'] = config.slime_rotation_speed
-        # self.slime_compute_shader['sensor_distance'] = config.slime_sensor_distance
-        # self.slime_compute_shader['sensor_angle'] = config.slime_sensor_angle
-        # self.slime_compute_shader['sensor_size'] = config.slime_sensor_size
+        self.slime_compute_shader['rotation_speed'] = config.slime_rotation_speed
+        self.slime_compute_shader['sensor_distance'] = config.slime_sensor_distance
+        self.slime_compute_shader['sensor_angle'] = config.slime_sensor_angle
+        self.slime_compute_shader['sensor_size'] = config.slime_sensor_size
 
     def clear(self):
         # release and redefine the texture
@@ -283,42 +286,37 @@ class SlimeMoldWindow(WindowConfig):
             imgui.push_item_width(imgui.get_window_width() * 0.75)
 
             changed, config.slime_movement_speed = imgui.slider_float(
-                'Movement Speed', config.slime_movement_speed, 0.0, 500
+                'Movement Speed', config.slime_movement_speed, 0.0, 2
             )
             if changed:
-                # self.slime_compute_shader['movement_speed'] = config.slime_movement_speed
-                pass
+                self.slime_compute_shader['movement_speed'] = config.slime_movement_speed
 
             changed, config.slime_rotation_speed = imgui.slider_float(
-                'Rotation Speed', config.slime_rotation_speed, 0.0, 500
+                'Rotation Speed', config.slime_rotation_speed, 0.0, 2
             )
             if changed:
-                # self.slime_compute_shader['rotation_speed'] = config.slime_rotation_speed
-                pass
+                self.slime_compute_shader['rotation_speed'] = config.slime_rotation_speed
 
             changed, config.slime_sensor_angle = imgui.slider_float(
                 'Sensor Angle', config.slime_sensor_angle, 0.0, 6.5
             )
             if changed:
-                # self.slime_compute_shader['sensor_angle'] = config.slime_sensor_angle
-                pass
+                self.slime_compute_shader['sensor_angle'] = config.slime_sensor_angle
 
             changed, config.slime_sensor_distance = imgui.slider_int(
                 'Sensor Distance', config.slime_sensor_distance, 1, 10
             )
             if changed:
-                # self.slime_compute_shader['sensor_distance'] = config.slime_sensor_distance
-                pass
+                self.slime_compute_shader['sensor_distance'] = config.slime_sensor_distance
 
             changed, config.slime_sensor_size = imgui.slider_int(
                 'Sensor Size', config.slime_sensor_size, 1, 10
             )
             if changed:
-                # self.slime_compute_shader['sensor_size'] = config.slime_sensor_size
-                pass
+                self.slime_compute_shader['sensor_size'] = config.slime_sensor_size
 
             changed, config.number_of_agents = imgui.slider_int(
-                'Number of Agents', config.number_of_agents, 1, 1000000
+                'Number of Agents', config.number_of_agents, 10000, 500000
             )
             imgui.text('In order to change the number of slime agents, \nyou will have to restart the simulation.')
 
@@ -329,18 +327,16 @@ class SlimeMoldWindow(WindowConfig):
             imgui.push_item_width(imgui.get_window_width() * 0.75)
 
             changed, config.blur_diffusion_speed = imgui.slider_float(
-                'Diffusion Speed', config.blur_diffusion_speed, 0.0, 100.0
+                'Diffusion Speed', config.blur_diffusion_speed, 0.0, 50.0
             )
             if changed:
                 self.blur_compute_shader['diffusion_speed'] = config.blur_diffusion_speed
-                pass
 
             changed, config.blur_evaporation_speed = imgui.slider_float(
-                'Evaporation Speed', config.blur_evaporation_speed, 0.0, 50
+                'Evaporation Speed', config.blur_evaporation_speed, 0.0, 10
             )
             if changed:
                 self.blur_compute_shader['evaporation_speed'] = config.blur_evaporation_speed
-                pass
 
             imgui.pop_item_width()
             imgui.end()
