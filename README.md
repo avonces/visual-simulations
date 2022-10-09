@@ -8,8 +8,8 @@ WORK IN PROGRESS
 
 ## concept art
 ### slime mold behavior
+#### Made by **Sage Jenson**, borrowed from https://cargocollective.com/sagejenson/physarum
 ![CONCEPT ART: slime mold behavior](https://github.com/avonces/visual-simulations/blob/master/pics/concept_art_-_slime_mold_behavior.png)
-(from https://cargocollective.com/sagejenson/physarum)
 
 
 
