@@ -8,7 +8,7 @@ WORK IN PROGRESS
 
 ## concept art
 ### slime mold behavior
-![CONCEPT ART: slime mold behavior](https://https://github.com/avonces/visual-simulations/blob/master/pics/concept_art_-_slime_mold_behavior.png)
+![CONCEPT ART: slime mold behavior](https://github.com/avonces/visual-simulations/blob/master/pics/concept_art_-_slime_mold_behavior.png)
 (from https://cargocollective.com/sagejenson/physarum)
 
 
