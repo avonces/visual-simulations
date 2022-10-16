@@ -3,6 +3,10 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton
 from multiprocessing import Process
 
+from texture_shader_window import TextureShaderWindow
+from slime_mold_window import SlimeMoldWindow
+from mandelbrot_set_window import MandelbrotSetWindow
+
 
 """
 logging
@@ -38,47 +42,92 @@ class VisualSimulationsLauncher(QMainWindow):
         self.create_ui()
 
     def create_ui(self) -> None:
-        widget = QWidget()
-        vbox = QVBoxLayout(widget)
-        vbox.setAlignment(Qt.AlignCenter)
+        self.widget = QWidget()
+        self.vbox = QVBoxLayout(self.widget)
+        self.vbox.setAlignment(Qt.AlignCenter)
 
-        open_ts_window_btn = QPushButton('Texture Shaders', self)
-        open_ts_window_btn.setMinimumWidth(200)
-        open_ts_window_btn.setMinimumHeight(50)
-        open_ts_window_btn.clicked.connect(self.open_ts_window)
-        vbox.addWidget(open_ts_window_btn)
+        self.open_ts_window_btn = QPushButton('Texture Shaders', self)
+        self.open_ts_window_btn.setMinimumWidth(200)
+        self.open_ts_window_btn.setMinimumHeight(50)
+        self.open_ts_window_btn.clicked.connect(self.open_ts_window)
+        self.vbox.addWidget(self.open_ts_window_btn)
 
-        open_sm_window_btn = QPushButton('Slime Mold Simulation', self)
-        open_sm_window_btn.setMinimumWidth(200)
-        open_sm_window_btn.setMinimumHeight(50)
-        open_sm_window_btn.clicked.connect(self.open_sm_window)
-        vbox.addWidget(open_sm_window_btn)
+        self.open_sm_window_btn = QPushButton('Slime Mold Simulation', self)
+        self.open_sm_window_btn.setMinimumWidth(200)
+        self.open_sm_window_btn.setMinimumHeight(50)
+        self.open_sm_window_btn.clicked.connect(self.open_sm_window)
+        self.vbox.addWidget(self.open_sm_window_btn)
 
-        # open_mbs_window_btn = QPushButton('Mandelbrot Set', self)
-        # open_mbs_window_btn.setMinimumWidth(200)
-        # open_mbs_window_btn.setMinimumHeight(50)
-        # open_mbs_window_btn.clicked.connect()
-        # vbox.addWidget(open_mbs_window_btn)
+        self.open_mbs_window_btn = QPushButton('Mandelbrot Set', self)
+        self.open_mbs_window_btn.setMinimumWidth(200)
+        self.open_mbs_window_btn.setMinimumHeight(50)
+        self.open_mbs_window_btn.clicked.connect(self.open_mbs_window)
+        self.vbox.addWidget(self.open_mbs_window_btn)
 
-        self.setCentralWidget(widget)
+        self.setCentralWidget(self.widget)
 
     def open_ts_window(self) -> None:
-        from texture_shader_window import TextureShaderWindow
+        if self.subprocess:
+            self.subprocess.terminate()
 
-        self.subprocess = Process(name='v sims - ts window', target=TextureShaderWindow.run, args=())
-        self.subprocess.start()  # launch the simulation
+            if self.subprocess.name == 'smw':
+                self.open_sm_window_btn.setText('Slime Mold Simulation')
+                self.open_sm_window_btn.setEnabled(True)
 
-        application.closeAllWindows()  # close the launcher
-        application.exit(0)
+            else:
+                self.open_mbs_window_btn.setText('Mandelbrot Set')
+                self.open_mbs_window_btn.setEnabled(True)
 
-    def open_sm_window(self) -> None:
-        from slime_mold_window import SlimeMoldWindow
-
-        self.subprocess = Process(name='v sims - sm window', target=SlimeMoldWindow.run, args=())
+        self.subprocess = Process(name='tsw', target=TextureShaderWindow.run, args=())
         self.subprocess.start()
 
-        application.closeAllWindows()
-        application.exit(0)
+        self.open_ts_window_btn.setText('Currently Running')
+        self.open_ts_window_btn.setDisabled(True)
+
+        # application.closeAllWindows()  # close the launcher
+        # application.exit(0)
+
+    def open_sm_window(self) -> None:
+        if self.subprocess:
+            self.subprocess.terminate()
+
+            if self.subprocess.name == 'tsw':
+                self.open_ts_window_btn.setText('Texture Shaders')
+                self.open_ts_window_btn.setEnabled(True)
+
+            else:
+                self.open_mbs_window_btn.setText('Mandelbrot Set')
+                self.open_mbs_window_btn.setEnabled(True)
+
+        self.subprocess = Process(name='smw', target=SlimeMoldWindow.run, args=())
+        self.subprocess.start()
+
+        self.open_sm_window_btn.setText('Currently Running')
+        self.open_sm_window_btn.setDisabled(True)
+
+        # application.closeAllWindows()  # close the launcher
+        # application.exit(0)
+
+    def open_mbs_window(self) -> None:
+        if self.subprocess:
+            self.subprocess.terminate()
+
+            if self.subprocess.name == 'tsw':
+                self.open_ts_window_btn.setText('Texture Shaders')
+                self.open_ts_window_btn.setEnabled(True)
+
+            else:
+                self.open_sm_window_btn.setText('Slime Mold Simulation')
+                self.open_sm_window_btn.setEnabled(True)
+
+        self.subprocess = Process(name='mbsw', target=MandelbrotSetWindow().run, args=())
+        self.subprocess.start()
+
+        self.open_mbs_window_btn.setText('Currently Running')
+        self.open_mbs_window_btn.setDisabled(True)
+
+        # application.closeAllWindows()  # close the launcher
+        # application.exit(0)
 
 
 """

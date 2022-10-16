@@ -44,9 +44,9 @@ def generate_agent_data(agent_count: int = config.number_of_agents, dimensions: 
     species = numpy.array([1] * agent_count)
 
     # translate slice objects to concatenation along the second axis:
-    # array([[x, y, angle]
-    #        [x, y, angle]
-    #        [x, y, angle]
+    # array([[x, y, angle, species]
+    #        [x, y, angle, species]
+    #        [x, y, angle, species]
     #        [...]])
     return numpy.c_[x, y, angle, species]
 
